@@ -14,20 +14,7 @@ namespace WindowsFormsApplication5
 
             SourceData.PersonRow sourceRow = sourceDataTable.NewPersonRow();
 
-            //initialize row
-            sourceRow.BusinessEntityID = 0;
-            sourceRow.PersonType = "";
-            sourceRow.NameStyle = false;
-            sourceRow.MiddleName = "";
-            sourceRow.LastName = "";
-            sourceRow.Title = "";
-            sourceRow.Suffix = "";
-            sourceRow.FirstName = "";
-            sourceRow.EmailPromotion = 0;
-            sourceRow.Demographics = "";
-            sourceRow.rowguid = Guid.Empty;
-            sourceRow.ModifiedDate = DateTime.MinValue;
-            sourceRow.AdditionalContactInfo = "";
+            InitializeSourceRow(sourceRow);
 
             if (sourceRow != null)
             {
@@ -46,13 +33,12 @@ namespace WindowsFormsApplication5
                 //with this ForMember, every FirstName should be "First!"
                 .ForMember(src => src.FirstName, opt => opt.MapFrom<string>(src => "First!"))
 
-                //don't map properties introduced in DataRow
-                .ForMember(src => src.ItemArray, opt => opt.Ignore())
-                ;
+                //!!don't map property ItemArray from DataRow!!
+                .ForMember(src => src.ItemArray, opt => opt.Ignore());
 
             AutoMapper.Mapper.Map<SourceData.PersonRow, DestinationData.PersonRow>(sourceRow, destinationRow);
 
-            //this assertion will fail unless you use opt.Ignore() for ItemArray
+            //!!this assertion will fail unless you use opt.Ignore() for ItemArray!!
             Debug.Assert(destinationRow.FirstName.Equals("First!"), "datarow mapping failed");
 
         }
@@ -63,11 +49,32 @@ namespace WindowsFormsApplication5
 
             //now the Poco - this all works
             AutoMapper.Mapper.CreateMap<SourceData.PersonRow, PocoPerson>()
+                //with this ForMember, every FirstName should be "First!"
                 .ForMember(src => src.FirstName, opt => opt.MapFrom(src => "First!"));
 
             AutoMapper.Mapper.Map<SourceData.PersonRow, PocoPerson>(sourceRow, pocoPerson);
 
             Debug.Assert(pocoPerson.FirstName.Equals("First!"), "poco mapping failed");
+        }
+
+        private static void InitializeSourceRow(SourceData.PersonRow sourceRow)
+        {
+            //initialize the row - this is to avoid DBNull errors during mapping
+            //these errors can be avoided using features of AutoMapper but I
+            //wanted to keep this sample simple
+            sourceRow.BusinessEntityID = 0;
+            sourceRow.PersonType = "";
+            sourceRow.NameStyle = false;
+            sourceRow.MiddleName = "";
+            sourceRow.LastName = "";
+            sourceRow.Title = "";
+            sourceRow.Suffix = "";
+            sourceRow.FirstName = "";
+            sourceRow.EmailPromotion = 0;
+            sourceRow.Demographics = "";
+            sourceRow.rowguid = Guid.Empty;
+            sourceRow.ModifiedDate = DateTime.MinValue;
+            sourceRow.AdditionalContactInfo = "";
         }
     }
 }
